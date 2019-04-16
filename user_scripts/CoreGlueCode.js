@@ -9,27 +9,27 @@
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 var IodineGUI = {
-    Iodine:null,
-    Blitter:null,
-    coreTimerID:null,
+    Iodine: null,
+    Blitter: null,
+    coreTimerID: null,
     GUITimerID: null,
-    toMap:null,
-    toMapIndice:0,
-    suspended:false,
-    isPlaying:false,
-    startTime:(+(new Date()).getTime()),
-    mixerInput:null,
-    currentSpeed:[false,0],
-    defaults:{
-        timerRate:16,
-        sound:true,
-        volume:1,
-        skipBoot:true,
-        toggleSmoothScaling:true,
-        toggleDynamicSpeed:false,
-        toggleOffthreadGraphics:true,
-        toggleOffthreadCPU:(navigator.userAgent.indexOf('AppleWebKit') == -1 || (navigator.userAgent.indexOf('Windows NT 10.0') != -1 && navigator.userAgent.indexOf('Trident') == -1)),
-        keyZonesGBA:[
+    toMap: null,
+    toMapIndice: 0,
+    suspended: false,
+    isPlaying: false,
+    startTime: (+(new Date()).getTime()),
+    mixerInput: null,
+    currentSpeed: [false, 0],
+    defaults: {
+        timerRate: 16,
+        sound: true,
+        volume: 1,
+        skipBoot: true,
+        toggleSmoothScaling: true,
+        toggleDynamicSpeed: false,
+        toggleOffthreadGraphics: true,
+        toggleOffthreadCPU: (navigator.userAgent.indexOf('AppleWebKit') == -1 || (navigator.userAgent.indexOf('Windows NT 10.0') != -1 && navigator.userAgent.indexOf('Trident') == -1)),
+        keyZonesGBA: [
             //Use this to control the GBA key mapping:
             //A:
             90,
@@ -52,7 +52,7 @@ var IodineGUI = {
             //L:
             65
         ],
-        keyZonesControl:[
+        keyZonesControl: [
             //Use this to control the emulator function key mapping:
             //Volume Down:
             55,
@@ -73,7 +73,9 @@ var IodineGUI = {
         ]
     }
 };
-window.onload = function () {
+
+document.getElementById("startButton").addEventListener("click", () => {
+    document.getElementById("instructions").outerHTML = "";
     //Populate settings:
     registerDefaultSettings();
     //Initialize Iodine:
@@ -93,7 +95,7 @@ window.onload = function () {
 
     // Load our stuff
     downloadBIOS();
-};
+})
 
 function downloadBIOS() {
     downloadFile("./binaries/gba_bios.bin", registerBIOS);
@@ -122,23 +124,21 @@ function registerIodineHandler() {
         */
         if (typeof SharedArrayBuffer != "function" || typeof Atomics != "object") {
             throw null;
-        }
-        else if (!IodineGUI.defaults.toggleOffthreadCPU) {
+        } else if (!IodineGUI.defaults.toggleOffthreadCPU) {
             //Try starting Iodine normally, but initialize offthread gfx:
             IodineGUI.Iodine = new IodineGBAWorkerGfxShim();
-        }
-        else {
+        } else {
             //Try starting Iodine in a webworker:
             IodineGUI.Iodine = new IodineGBAWorkerShim();
             //In order for save on page unload, this needs to be done:
             addEvent("beforeunload", window, registerBeforeUnloadHandler);
         }
-    }
-    catch (e) {
+    } catch (e) {
         //Otherwise just run on-thread:
         IodineGUI.Iodine = new GameBoyAdvanceEmulator();
     }
 }
+
 function registerBeforeUnloadHandler(e) {
     IodineGUI.Iodine.pause();
     if (e.preventDefault) {
@@ -146,15 +146,18 @@ function registerBeforeUnloadHandler(e) {
     }
     return "IodineGBA needs to process your save data, leaving now may result in not saving current data.";
 }
+
 function registerTimerHandler() {
     IodineGUI.defaults.timerRate = 16;
     IodineGUI.Iodine.setIntervalRate(IodineGUI.defaults.timerRate | 0);
 }
+
 function initTimer() {
     IodineGUI.coreTimerID = setInterval(function () {
         IodineGUI.Iodine.timerCallback(((+(new Date()).getTime()) - (+IodineGUI.startTime)) >>> 0);
     }, IodineGUI.defaults.timerRate | 0);
 }
+
 function registerBlitterHandler() {
     IodineGUI.Blitter = new GfxGlueCode(240, 160);
     IodineGUI.Blitter.attachCanvas(document.getElementById("emulator_target"));
@@ -166,6 +169,7 @@ function registerBlitterHandler() {
         }
     });
 }
+
 function registerAudioHandler() {
     var Mixer = new GlueCodeMixer();
     IodineGUI.mixerInput = new GlueCodeMixerInput(Mixer);
